@@ -32,7 +32,7 @@ public class MainScreen extends JFrame {
 	private JTable table;
 	private JFileChooser fc;
 	
-	String hahohihi;
+	String hahohi;
 
 	public MainScreen() {
 		setTitle("MP3 Player");
