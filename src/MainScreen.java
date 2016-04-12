@@ -93,7 +93,7 @@ public class MainScreen extends JFrame {
 	private void setMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
-
+		
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
