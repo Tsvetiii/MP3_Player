@@ -31,6 +31,8 @@ public class MainScreen extends JFrame {
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private JFileChooser fc;
+	
+	String hahohi;
 
 	public MainScreen() {
 		setTitle("MP3 Player");
@@ -91,7 +93,7 @@ public class MainScreen extends JFrame {
 	private void setMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
-
+		
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
