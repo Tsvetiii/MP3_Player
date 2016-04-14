@@ -11,31 +11,44 @@ import java.awt.BorderLayout;
 import javax.swing.JTable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Vector;
 
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableModel;
+import javax.swing.table.TableRowSorter;
 import javax.swing.JLabel;
 import java.awt.Button;
 import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
-	
+
 	public static final String[] categories = { "Name", "Author", "Album", "Genre" };
-	
+
 	private JTextField textField;
+	private JComboBox<String> categoryChoice;
 	private DefaultTableModel tableModel;
 	private JTable table;
+	private TableRowSorter<TableModel> rowSorter;
+	private RowFilter<? super TableModel, ? super Integer> rowFilter;
 	private JFileChooser fc;
-	
+
 	public MainScreen() {
 		setTitle("MP3 Player");
 		setBounds(100, 100, 600, 500);
-		
+
 		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
 				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
 				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
@@ -75,7 +88,8 @@ public class MainScreen extends JFrame {
 		textField = new JTextField();
 		textField.setColumns(10);
 
-		JComboBox<String> categoryChoice = new JComboBox<>(categories);
+		categoryChoice = new JComboBox<>(categories);
+		categoryChoice.addActionListener(categoryChoiceAL);
 
 		settingsPanel.add(lblSearch);
 		settingsPanel.add(textField);
@@ -83,15 +97,25 @@ public class MainScreen extends JFrame {
 
 		tableModel = new DefaultTableModel(data, categories);
 		table = new JTable(tableModel);
+		rowSorter = new TableRowSorter<>(table.getModel());
+
+		table.setRowSorter(rowSorter);
+		table.setAutoCreateColumnsFromModel(false);
+		table.getTableHeader().setReorderingAllowed(false);
 		JScrollPane scrollPane = new JScrollPane(table);
+		getContentPane().add(table.getTableHeader());
 		getContentPane().add(scrollPane, BorderLayout.CENTER);
 		table.setFillsViewportHeight(true);
+
+		sortTable(0);
+		textField.getDocument().addDocumentListener(tableSearchAL);
+		table.getTableHeader().addMouseListener(tableHeaderClickAL);
 	}
 
 	private void setMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
-		
+
 		JMenu mnFile = new JMenu("File");
 		menuBar.add(mnFile);
 
@@ -142,6 +166,8 @@ public class MainScreen extends JFrame {
 				File file = fc.getSelectedFile();
 			}
 
+			// sorting songs
+			sortTable(0);
 		}
 	};
 
@@ -172,6 +198,9 @@ public class MainScreen extends JFrame {
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File[] files = fc.getSelectedFile().listFiles(fileNameFilter);
 			}
+
+			// sorting songs
+			sortTable(0);
 		}
 	};
 
@@ -210,6 +239,67 @@ public class MainScreen extends JFrame {
 			dispose();
 		}
 	};
+
+	DocumentListener tableSearchAL = new DocumentListener() {
+
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			String text = textField.getText();
+			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
+
+			if (text.trim().length() == 0) {
+				rowSorter.setRowFilter(null);
+			} else {
+				rowSorter.setRowFilter(rowFilter);
+			}
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			String text = textField.getText();
+			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
+
+			if (text.trim().length() == 0) {
+				rowSorter.setRowFilter(null);
+			} else {
+				rowSorter.setRowFilter(rowFilter);
+			}
+		}
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			throw new UnsupportedOperationException("Not supported yet.");
+		}
+	};
+
+	MouseListener tableHeaderClickAL = new MouseAdapter() {
+
+		@Override
+		public void mouseClicked(MouseEvent e) {
+			int colIndex = table.columnAtPoint(e.getPoint());
+			sortTable(colIndex);
+		}
+	};
+
+	ActionListener categoryChoiceAL = new ActionListener() {
+		public void actionPerformed(ActionEvent actionEvent) {
+			String text = textField.getText();
+
+			if (text.trim().length() == 0) {
+				rowSorter.setRowFilter(null);
+			} else {
+				rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
+				rowSorter.setRowFilter(rowFilter);
+			}
+		}
+	};
+
+	public void sortTable(int colIndex) {
+		@SuppressWarnings("unchecked")
+		Vector<Object> testData = tableModel.getDataVector();
+		Collections.sort(testData, new ColumnSorter(colIndex));
+		tableModel.fireTableStructureChanged();
+	}
 
 	private String getUserDefaultMusicFolder() {
 		return System.getProperty("user.home") + System.getProperty("file.separator") + "Music";
