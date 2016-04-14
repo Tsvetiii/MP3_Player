@@ -16,12 +16,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.FilenameFilter;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Vector;
+import java.util.List;
 
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
+import javax.swing.RowSorter;
+import javax.swing.SortOrder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
@@ -42,74 +44,17 @@ public class MainScreen extends JFrame {
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private TableRowSorter<TableModel> rowSorter;
-	private RowFilter<? super TableModel, ? super Integer> rowFilter;
+	private RowFilter<TableModel, Integer> rowFilter;
 	private JFileChooser fc;
+	private int lastSelectedColumnIndex;
 
 	public MainScreen() {
+
 		setTitle("MP3 Player");
 		setBounds(100, 100, 600, 500);
-
-		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
-
 		setMenu();
+		setUIComponents();
 
-		JPanel controlsPanel = new JPanel();
-		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
-
-		Button btnPlay = new Button("PLAY");
-		controlsPanel.add(btnPlay);
-
-		JSlider slider = new JSlider();
-		slider.setValue(0);
-		controlsPanel.add(slider);
-
-		Button btnStop = new Button("STOP");
-		controlsPanel.add(btnStop);
-
-		JPanel settingsPanel = new JPanel();
-		getContentPane().add(settingsPanel, BorderLayout.NORTH);
-
-		JLabel lblSearch = new JLabel("Search:");
-
-		textField = new JTextField();
-		textField.setColumns(10);
-
-		categoryChoice = new JComboBox<>(categories);
-		categoryChoice.addActionListener(categoryChoiceAL);
-
-		settingsPanel.add(lblSearch);
-		settingsPanel.add(textField);
-		settingsPanel.add(categoryChoice);
-
-		tableModel = new DefaultTableModel(data, categories);
-		table = new JTable(tableModel);
-		rowSorter = new TableRowSorter<>(table.getModel());
-
-		table.setRowSorter(rowSorter);
-		table.setAutoCreateColumnsFromModel(false);
-		table.getTableHeader().setReorderingAllowed(false);
-		JScrollPane scrollPane = new JScrollPane(table);
-		getContentPane().add(table.getTableHeader());
-		getContentPane().add(scrollPane, BorderLayout.CENTER);
-		table.setFillsViewportHeight(true);
-
-		sortTable(0);
-		textField.getDocument().addDocumentListener(tableSearchAL);
-		table.getTableHeader().addMouseListener(tableHeaderClickAL);
 	}
 
 	private void setMenu() {
@@ -150,6 +95,77 @@ public class MainScreen extends JFrame {
 		mntmRemoveFile.addActionListener(removeFileAL);
 		mntmRemoveAllFiles.addActionListener(removeAllFilesAL);
 		mntmExit.addActionListener(exitAL);
+	}
+
+	private void setUIComponents() {
+
+		JPanel controlsPanel = new JPanel();
+		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
+
+		Button btnPlay = new Button("PLAY");
+		controlsPanel.add(btnPlay);
+
+		JSlider slider = new JSlider();
+		slider.setValue(0);
+		controlsPanel.add(slider);
+
+		Button btnStop = new Button("STOP");
+		controlsPanel.add(btnStop);
+
+		JPanel settingsPanel = new JPanel();
+		getContentPane().add(settingsPanel, BorderLayout.NORTH);
+
+		JLabel lblSearch = new JLabel("Search:");
+
+		textField = new JTextField();
+		textField.setColumns(10);
+
+		categoryChoice = new JComboBox<>(categories);
+		categoryChoice.addActionListener(categoryChoiceAL);
+
+		settingsPanel.add(lblSearch);
+		settingsPanel.add(textField);
+		settingsPanel.add(categoryChoice);
+
+		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
+				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
+				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
+
+		setPlaylist(data);
+
+	}
+
+	private void setPlaylist(String[][] data) {
+
+		tableModel = new DefaultTableModel(data, categories);
+		table = new JTable(tableModel);
+		rowSorter = new TableRowSorter<>(table.getModel());
+
+		table.setRowSorter(rowSorter);
+		table.setAutoCreateColumnsFromModel(false);
+		table.getTableHeader().setReorderingAllowed(false);
+		JScrollPane scrollPane = new JScrollPane(table);
+		getContentPane().add(table.getTableHeader());
+		getContentPane().add(scrollPane, BorderLayout.CENTER);
+		table.setFillsViewportHeight(true);
+		lastSelectedColumnIndex = -1;
+		sortTable(0);
+
+		textField.getDocument().addDocumentListener(tableSearchAL);
+		table.getTableHeader().addMouseListener(tableHeaderClickAL);
+
 	}
 
 	ActionListener addFileAL = new ActionListener() {
@@ -276,7 +292,7 @@ public class MainScreen extends JFrame {
 
 		@Override
 		public void mouseClicked(MouseEvent e) {
-			int colIndex = table.columnAtPoint(e.getPoint());
+			int colIndex = table.getColumnModel().getColumnIndexAtX(e.getX());
 			sortTable(colIndex);
 		}
 	};
@@ -294,11 +310,22 @@ public class MainScreen extends JFrame {
 		}
 	};
 
-	public void sortTable(int colIndex) {
-		@SuppressWarnings("unchecked")
-		Vector<Object> testData = tableModel.getDataVector();
-		Collections.sort(testData, new ColumnSorter(colIndex));
-		tableModel.fireTableStructureChanged();
+	private void sortTable(int colIndex) {
+
+		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+		SortOrder order;
+
+		if (lastSelectedColumnIndex == colIndex) {
+			order = SortOrder.DESCENDING;
+			lastSelectedColumnIndex = -1;
+		} else {
+			order = SortOrder.ASCENDING;
+			lastSelectedColumnIndex = colIndex;
+		}
+
+		sortKeys.add(new RowSorter.SortKey(colIndex, order));
+		rowSorter.setSortKeys(sortKeys);
+
 	}
 
 	private String getUserDefaultMusicFolder() {
