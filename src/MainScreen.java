@@ -14,7 +14,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,6 +34,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
+
+import javazoom.jl.decoder.JavaLayerException;
+import javazoom.jl.player.Player;
+
 import javax.swing.JLabel;
 import java.awt.Button;
 import javax.swing.JSlider;
@@ -104,6 +111,7 @@ public class MainScreen extends JFrame {
 
 		Button btnPlay = new Button("PLAY");
 		controlsPanel.add(btnPlay);
+		btnPlay.addActionListener(btnPlayAL);
 
 		JSlider slider = new JSlider();
 		slider.setValue(0);
@@ -111,6 +119,7 @@ public class MainScreen extends JFrame {
 
 		Button btnStop = new Button("STOP");
 		controlsPanel.add(btnStop);
+		btnStop.addActionListener(btnStopAL);
 
 		JPanel settingsPanel = new JPanel();
 		getContentPane().add(settingsPanel, BorderLayout.NORTH);
@@ -331,5 +340,60 @@ public class MainScreen extends JFrame {
 	private String getUserDefaultMusicFolder() {
 		return System.getProperty("user.home") + System.getProperty("file.separator") + "Music";
 	}
+
+	FileInputStream FIS;
+	BufferedInputStream BIS;
+
+	public Player player;
+
+	// method to stop playing a song
+	public void stop() {
+		if (player != null) {
+			player.close();
+		}
+	}
+
+	ActionListener btnStopAL = new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			stop();
+
+		}
+	};
+
+	// method to play a song
+	public void play(String path) {
+		try {
+			FIS = new FileInputStream(path);
+			BIS = new BufferedInputStream(FIS);
+
+			player = new Player(BIS);
+
+		} catch (FileNotFoundException | JavaLayerException e) {
+
+		}
+
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					player.play();
+				} catch (JavaLayerException e) {
+
+				}
+			}
+		}.start();
+	}
+	
+	ActionListener btnPlayAL = new ActionListener() {
+		
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			play("E:\\Vance Joy - Riptide.mp3");
+			
+		}
+	};
+	
 
 }
