@@ -135,22 +135,24 @@ public class MainScreen extends JFrame {
 		settingsPanel.add(lblSearch);
 		settingsPanel.add(textField);
 		settingsPanel.add(categoryChoice);
+		
+		String[][] data = {};
 
-		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
+//		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
+//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
+//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
+//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
+//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
+//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
+//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
 
 		setPlaylist(data);
 
@@ -189,6 +191,7 @@ public class MainScreen extends JFrame {
 			int returnVal = fc.showOpenDialog(MainScreen.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File file = fc.getSelectedFile();
+				
 			}
 
 			// sorting songs
