@@ -20,8 +20,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
@@ -44,7 +44,7 @@ import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
 
-	public static final String[] categories = { "Name", "Author", "Album", "Genre" };
+	public static final String[] CATEGORIES = { "Name", "Author", "Album", "Genre" };
 
 	private JTextField textField;
 	private JComboBox<String> categoryChoice;
@@ -54,6 +54,7 @@ public class MainScreen extends JFrame {
 	private RowFilter<TableModel, Integer> rowFilter;
 	private JFileChooser fc;
 	private int lastSelectedColumnIndex;
+	private ArrayList<Song> songs;
 
 	public MainScreen() {
 
@@ -61,6 +62,8 @@ public class MainScreen extends JFrame {
 		setBounds(100, 100, 600, 500);
 		setMenu();
 		setUIComponents();
+
+		songs = new ArrayList<>();
 
 	}
 
@@ -129,38 +132,20 @@ public class MainScreen extends JFrame {
 		textField = new JTextField();
 		textField.setColumns(10);
 
-		categoryChoice = new JComboBox<>(categories);
+		categoryChoice = new JComboBox<>(CATEGORIES);
 		categoryChoice.addActionListener(categoryChoiceAL);
 
 		settingsPanel.add(lblSearch);
 		settingsPanel.add(textField);
 		settingsPanel.add(categoryChoice);
-		
-		String[][] data = {};
 
-//		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
-
-		setPlaylist(data);
+		setPlaylist();
 
 	}
 
-	private void setPlaylist(String[][] data) {
+	private void setPlaylist() {
 
-		tableModel = new DefaultTableModel(data, categories);
+		tableModel = new DefaultTableModel(null, CATEGORIES);
 		table = new JTable(tableModel);
 		rowSorter = new TableRowSorter<>(table.getModel());
 
@@ -179,6 +164,41 @@ public class MainScreen extends JFrame {
 
 	}
 
+	private void updatePlaylist() {
+
+		if (this.songs != null) {
+			tableModel.setRowCount(0);
+
+			int size = this.songs.size();
+			String[][] data = new String[size][CATEGORIES.length];
+
+			for (int i = 0; i < size; i++) {
+
+				data[i][0] = this.songs.get(i).getTitle();
+				data[i][1] = this.songs.get(i).getArtist();
+				data[i][2] = this.songs.get(i).getAlbum();
+				data[i][3] = this.songs.get(i).getGenre();
+
+				tableModel.addRow(data[i]);
+			}
+
+		}
+	}
+
+	public int getSongIndexInArrayList(String[] values) {
+		int index = -1;
+
+		for (Song s : this.songs) {
+			index++;
+			if (s.getTitle().equals(values[0]) && s.getArtist().equals(values[1]) && s.getAlbum().equals(values[2])
+					&& s.getGenre().equals(values[3])) {
+				return index;
+			}
+		}
+
+		return -1;
+	}
+
 	ActionListener addFileAL = new ActionListener() {
 
 		@Override
@@ -191,11 +211,12 @@ public class MainScreen extends JFrame {
 			int returnVal = fc.showOpenDialog(MainScreen.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File file = fc.getSelectedFile();
-				
-			}
+				songs.add(new Song(file));
 
-			// sorting songs
-			sortTable(0);
+				updatePlaylist();
+				tableModel.fireTableDataChanged();
+				sortTable(0);
+			}
 		}
 	};
 
@@ -206,7 +227,6 @@ public class MainScreen extends JFrame {
 			fc = new JFileChooser(getUserDefaultMusicFolder());
 			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-			// create new filename filter
 			FilenameFilter fileNameFilter = new FilenameFilter() {
 
 				@Override
@@ -225,25 +245,54 @@ public class MainScreen extends JFrame {
 			int returnVal = fc.showOpenDialog(MainScreen.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File[] files = fc.getSelectedFile().listFiles(fileNameFilter);
+
+				for (File f : files) {
+					songs.add(new Song(f));
+				}
+
+				updatePlaylist();
+				tableModel.fireTableDataChanged();
+				sortTable(0);
 			}
 
-			// sorting songs
-			sortTable(0);
 		}
 	};
 
 	ActionListener removeFileAL = new ActionListener() {
 
+		@SuppressWarnings("rawtypes")
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			int[] lines = table.getSelectedRows();
-			if (lines.length > 0) {
-				for (int i = 0; i < lines.length; i++) {
-					lines[i] = table.convertRowIndexToModel(lines[i]);
+
+			if (table.getSelectedRowCount() > 0) {
+				List<Vector> selectedRows = new ArrayList<>();
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				Vector rowData = model.getDataVector();
+				for (int row : table.getSelectedRows()) {
+					int modelRow = table.convertRowIndexToModel(row);
+					Vector rowValue = (Vector) rowData.get(modelRow);
+
+					System.out.println(rowValue.get(0));
+					System.out.println(rowValue.get(1));
+					System.out.println(rowValue.get(2));
+					System.out.println(rowValue.get(3));
+
+					String[] rowValues = { (String) rowValue.get(0), (String) rowValue.get(1), (String) rowValue.get(2),
+							(String) rowValue.get(3) };
+
+					int index = getSongIndexInArrayList(rowValues);
+
+					if (index != -1) {
+						songs.remove(index);
+					}
+
+					System.out.println(rowValue);
+					selectedRows.add(rowValue);
 				}
-				Arrays.sort(lines);
-				for (int i = lines.length - 1; i >= 0; i--) {
-					tableModel.removeRow(lines[i]);
+
+				for (Vector rowValue : selectedRows) {
+					int rowIndex = rowData.indexOf(rowValue);
+					model.removeRow(rowIndex);
 				}
 			}
 
@@ -255,8 +304,8 @@ public class MainScreen extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			DefaultTableModel tm = (DefaultTableModel) table.getModel();
-			tm.setRowCount(0);
+			songs.clear();
+			tableModel.setRowCount(0);
 		}
 	};
 
@@ -388,15 +437,13 @@ public class MainScreen extends JFrame {
 			}
 		}.start();
 	}
-	
+
 	ActionListener btnPlayAL = new ActionListener() {
-		
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			play("E:\\Vance Joy - Riptide.mp3");
-			
+			// play("E:\\Vance Joy - Riptide.mp3");
 		}
 	};
-	
 
 }

@@ -1,4 +1,3 @@
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -14,49 +13,44 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-
 public class Song {
 	private String title;
 	private String artist;
 	private String album;
 	private String genre;
 	private String path;
-	
-	
 
 	public Song(File file) {
 
 		setPath(file.getPath());
-		
-		
+
 		try {
 
-	        InputStream input = new FileInputStream(new File(path));
-	        ContentHandler handler = new DefaultHandler();
-	        Metadata metadata = new Metadata();
-	        Parser parser = new Mp3Parser();
-	        ParseContext parseCtx = new ParseContext();
-	        parser.parse(input, handler, metadata, parseCtx);
-	        input.close();
-	        
-	        setTitle(metadata.get("title"));
-	        setArtist(metadata.get("xmpDM:artist"));
-	        setAlbum(metadata.get("xmpDM:album"));
-	        setGenre(metadata.get("xmpDM:genre"));
-	        
+			InputStream input = new FileInputStream(new File(path));
+			ContentHandler handler = new DefaultHandler();
+			Metadata metadata = new Metadata();
+			Parser parser = new Mp3Parser();
+			ParseContext parseCtx = new ParseContext();
+			parser.parse(input, handler, metadata, parseCtx);
+			input.close();
 
-	        } catch (FileNotFoundException e) {
-	        e.printStackTrace();
-	        } catch (IOException e) {
-	        e.printStackTrace();
-	        } catch (SAXException e) {
-	        e.printStackTrace();
-	        } catch (TikaException e) {
-	        e.printStackTrace();
-	        }
-		
-	        }
-	
+			setTitle(metadata.get("title"));
+			setArtist(metadata.get("xmpDM:artist"));
+			setAlbum(metadata.get("xmpDM:album"));
+			setGenre(metadata.get("xmpDM:genre"));
+
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (SAXException e) {
+			e.printStackTrace();
+		} catch (TikaException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public String getPath() {
 		return path;
 	}
@@ -70,9 +64,9 @@ public class Song {
 	}
 
 	public void setTitle(String title) {
-		if(title == null){
+		if (title == null || title.equals("")) {
 			this.title = "No information";
-		} else{
+		} else {
 			this.title = title;
 		}
 	}
@@ -82,9 +76,9 @@ public class Song {
 	}
 
 	public void setArtist(String artist) {
-		if(artist == null){
+		if (artist == null || artist.equals("")) {
 			this.artist = "No information";
-		} else{
+		} else {
 			this.artist = artist;
 		}
 	}
@@ -94,9 +88,9 @@ public class Song {
 	}
 
 	public void setAlbum(String album) {
-		if(album == null){
+		if (album == null || album.equals("")) {
 			this.album = "No information";
-		} else{
+		} else {
 			this.album = album;
 		}
 	}
@@ -106,9 +100,9 @@ public class Song {
 	}
 
 	public void setGenre(String genre) {
-		if(genre == null){
+		if (genre == null || genre.equals("")) {
 			this.genre = "No information";
-		} else{
+		} else {
 			this.genre = genre;
 		}
 	}
