@@ -51,7 +51,7 @@ public class MainScreen extends JFrame {
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private TableRowSorter<TableModel> rowSorter;
-	private RowFilter<TableModel, Integer> rowFilter;
+	// private RowFilter<TableModel, Integer> rowFilter;
 	private JFileChooser fc;
 	private int lastSelectedColumnIndex;
 	private ArrayList<Song> songs;
@@ -182,16 +182,18 @@ public class MainScreen extends JFrame {
 				tableModel.addRow(data[i]);
 			}
 
+			tableModel.fireTableDataChanged();
+			sortTable(0);
 		}
 	}
 
-	public int getSongIndexInArrayList(String[] values) {
+	public int getSongIndexInPlaylist(String[] selectedRow) {
 		int index = -1;
 
 		for (Song s : this.songs) {
 			index++;
-			if (s.getTitle().equals(values[0]) && s.getArtist().equals(values[1]) && s.getAlbum().equals(values[2])
-					&& s.getGenre().equals(values[3])) {
+			if (s.getTitle().equals(selectedRow[0]) && s.getArtist().equals(selectedRow[1])
+					&& s.getAlbum().equals(selectedRow[2]) && s.getGenre().equals(selectedRow[3])) {
 				return index;
 			}
 		}
@@ -214,8 +216,6 @@ public class MainScreen extends JFrame {
 				songs.add(new Song(file));
 
 				updatePlaylist();
-				tableModel.fireTableDataChanged();
-				sortTable(0);
 			}
 		}
 	};
@@ -251,8 +251,6 @@ public class MainScreen extends JFrame {
 				}
 
 				updatePlaylist();
-				tableModel.fireTableDataChanged();
-				sortTable(0);
 			}
 
 		}
@@ -272,21 +270,15 @@ public class MainScreen extends JFrame {
 					int modelRow = table.convertRowIndexToModel(row);
 					Vector rowValue = (Vector) rowData.get(modelRow);
 
-					System.out.println(rowValue.get(0));
-					System.out.println(rowValue.get(1));
-					System.out.println(rowValue.get(2));
-					System.out.println(rowValue.get(3));
-
 					String[] rowValues = { (String) rowValue.get(0), (String) rowValue.get(1), (String) rowValue.get(2),
 							(String) rowValue.get(3) };
 
-					int index = getSongIndexInArrayList(rowValues);
+					int index = getSongIndexInPlaylist(rowValues);
 
 					if (index != -1) {
 						songs.remove(index);
 					}
 
-					System.out.println(rowValue);
 					selectedRows.add(rowValue);
 				}
 
@@ -317,30 +309,27 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	public RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
+		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
+				categoryChoice.getSelectedIndex());
+
+		if (searchField.trim().length() == 0) {
+			return null;
+		} else {
+			return rowFilter;
+		}
+	}
+
 	DocumentListener tableSearchAL = new DocumentListener() {
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			String text = textField.getText();
-			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			String text = textField.getText();
-			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 
 		@Override
@@ -360,14 +349,7 @@ public class MainScreen extends JFrame {
 
 	ActionListener categoryChoiceAL = new ActionListener() {
 		public void actionPerformed(ActionEvent actionEvent) {
-			String text = textField.getText();
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 	};
 
