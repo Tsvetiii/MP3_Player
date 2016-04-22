@@ -58,6 +58,9 @@ public class MainScreen extends JFrame {
 	private boolean isPlaying;
 	private int pausedOnFrame = 0;
 	private String currentPlayingSongPath = null;
+	FileInputStream FIS;
+	BufferedInputStream BIS;
+	private AdvancedPlayer player;
 
 	public MainScreen() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -130,9 +133,6 @@ public class MainScreen extends JFrame {
 		JMenuItem mntmExit = new JMenuItem("Exit");
 		mnFile.add(mntmExit);
 
-		JMenu mnEdit = new JMenu("Edit");
-		menuBar.add(mnEdit);
-
 		JMenu mnHelp = new JMenu("Help");
 		menuBar.add(mnHelp);
 
@@ -198,7 +198,7 @@ public class MainScreen extends JFrame {
 		}
 	}
 
-	public int getSelectedSongIndex(Vector<String> selectedRow) {
+	private int getSelectedSongIndex(Vector<String> selectedRow) {
 		int index = -1;
 
 		String[] rowValues = { (String) selectedRow.get(0), (String) selectedRow.get(1), (String) selectedRow.get(2),
@@ -215,7 +215,7 @@ public class MainScreen extends JFrame {
 		return -1;
 	}
 
-	public RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
+	private RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
 		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
 				categoryChoice.getSelectedIndex());
 
@@ -224,6 +224,89 @@ public class MainScreen extends JFrame {
 		} else {
 			return rowFilter;
 		}
+	}
+
+	private void sortTable(int colIndex) {
+
+		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
+		SortOrder order;
+
+		if (lastSelectedColumnIndex == colIndex) {
+			order = SortOrder.DESCENDING;
+			lastSelectedColumnIndex = -1;
+		} else {
+			order = SortOrder.ASCENDING;
+			lastSelectedColumnIndex = colIndex;
+		}
+
+		sortKeys.add(new RowSorter.SortKey(colIndex, order));
+		rowSorter.setSortKeys(sortKeys);
+
+	}
+
+	private String getUserDefaultMusicFolder() {
+		return System.getProperty("user.home") + System.getProperty("file.separator") + Strings.MUSIC_FOLDER_NAME;
+	}
+
+	private void play(String path) {
+
+		try {
+			FIS = new FileInputStream(path);
+			BIS = new BufferedInputStream(FIS);
+
+			player = new AdvancedPlayer(BIS);
+
+		} catch (IOException | JavaLayerException e) {
+			currentPlayingSongPath = null;
+			pausedOnFrame = 0;
+			JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
+		}
+
+		new Thread() {
+			@Override
+			public void run() {
+				try {
+					isPlaying = true;
+					currentPlayingSongPath = path;
+					player.play(pausedOnFrame, Integer.MAX_VALUE);
+
+				} catch (JavaLayerException e) {
+					currentPlayingSongPath = null;
+					pausedOnFrame = 0;
+					JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
+				}
+			}
+		}.start();
+
+	}
+
+	// method to stop playing a song
+	private void stop() {
+		if (player != null) {
+			player.close();
+			isPlaying = false;
+
+			setTitle(Strings.TITLE_NAME);
+		}
+	}
+
+	private void playSelectedRow(int row) {
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		Vector<?> rowData = model.getDataVector();
+		int modelRow = table.convertRowIndexToModel(row);
+
+		@SuppressWarnings("unchecked")
+		Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+
+		int index = getSelectedSongIndex(rowValue);
+		if (index != -1) {
+			if (isPlaying) {
+				stop();
+			}
+			play(songs.get(index).getPath());
+			setTitle(Strings.TITLE_NAME + ": " + songs.get(index).getTitle());
+		}
+
 	}
 
 	ActionListener addFileAL = new ActionListener() {
@@ -344,6 +427,40 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	ActionListener btnPlayAL = new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+
+			int selectedRows = table.getSelectedRowCount();
+
+			if (selectedRows == 1) {
+				int row = table.getSelectedRow();
+				playSelectedRow(row);
+			} else if (selectedRows == 0) {
+				JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
+			} else {
+				JOptionPane.showMessageDialog(MainScreen.this, Strings.MORE_SELECTED);
+			}
+
+		}
+	};
+
+	ActionListener btnStopAL = new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			stop();
+
+		}
+	};
+
+	ActionListener categoryChoiceAL = new ActionListener() {
+		public void actionPerformed(ActionEvent actionEvent) {
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
+		}
+	};
+
 	DocumentListener tableSearchAL = new DocumentListener() {
 
 		@Override
@@ -371,184 +488,14 @@ public class MainScreen extends JFrame {
 		}
 	};
 
-	ActionListener categoryChoiceAL = new ActionListener() {
-		public void actionPerformed(ActionEvent actionEvent) {
-			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
-		}
-	};
-
-	private void sortTable(int colIndex) {
-
-		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
-		SortOrder order;
-
-		if (lastSelectedColumnIndex == colIndex) {
-			order = SortOrder.DESCENDING;
-			lastSelectedColumnIndex = -1;
-		} else {
-			order = SortOrder.ASCENDING;
-			lastSelectedColumnIndex = colIndex;
-		}
-
-		sortKeys.add(new RowSorter.SortKey(colIndex, order));
-		rowSorter.setSortKeys(sortKeys);
-
-	}
-
-	private String getUserDefaultMusicFolder() {
-		return System.getProperty("user.home") + System.getProperty("file.separator") + "Music";
-	}
-
-	FileInputStream FIS;
-	BufferedInputStream BIS;
-
-	public AdvancedPlayer player;
-	public long pauseLocation;
-	public long songTotalLenght;
-	public String fileLocation;
-
-	// method to stop playing a song
-	public void stop() {
-		if (player != null) {
-			player.close();
-			isPlaying = false;
-			pauseLocation = 0;
-			songTotalLenght = 0;
-
-			setTitle(Strings.TITLE_NAME);
-		}
-	}
-
-	ActionListener btnStopAL = new ActionListener() {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-			stop();
-
-		}
-	};
-
-	// public void pause() {
-	// if (player != null) {
-	// try {
-	// pauseLocation = FIS.available();
-	// player.close();
-	// setTitle(Strings.TITLE_NAME);
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// }
-	//
-	// }
-	// }
-	//
-	// public void resume() {
-	// try {
-	// FIS = new FileInputStream(fileLocation);
-	// BIS = new BufferedInputStream(FIS);
-	//
-	// player = new Player(BIS);
-	//
-	// FIS.skip(songTotalLenght - pauseLocation);
-	//
-	// } catch (FileNotFoundException | JavaLayerException e) {
-	//
-	// } catch (IOException e) {
-	// e.printStackTrace();
-	// }
-	//
-	// new Thread() {
-	// @Override
-	// public void run() {
-	// try {
-	// player.play();
-	// } catch (JavaLayerException e) {
-	//
-	// }
-	// }
-	// }.start();
-	// }
-
-	// method to play a song
-	public void play(String path) {
-
-		try {
-			FIS = new FileInputStream(path);
-			BIS = new BufferedInputStream(FIS);
-
-			player = new AdvancedPlayer(BIS);
-
-			// songTotalLenght = FIS.available();
-
-		} catch (IOException | JavaLayerException e) {
-			currentPlayingSongPath = null;
-			pausedOnFrame = 0;
-			JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
-		}
-
-		new Thread() {
-			@Override
-			public void run() {
-				try {
-					isPlaying = true;
-					currentPlayingSongPath = path;
-					player.play(pausedOnFrame, Integer.MAX_VALUE);
-
-				} catch (JavaLayerException e) {
-					currentPlayingSongPath = null;
-					pausedOnFrame = 0;
-					JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
-				}
-			}
-		}.start();
-
-	}
-
-	ActionListener btnPlayAL = new ActionListener() {
-
-		@Override
-		public void actionPerformed(ActionEvent e) {
-
-			int selectedRows = table.getSelectedRowCount();
-
-			if (selectedRows == 1) {
-				int row = table.getSelectedRow();
-				playSelectedRow(row);
-			} else if (selectedRows == 0) {
-				JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
-			} else {
-				JOptionPane.showMessageDialog(MainScreen.this, Strings.MORE_SELECTED);
-			}
-
-		}
-	};
-
 	MouseListener doubleClickTableRow = new MouseAdapter() {
 		public void mousePressed(MouseEvent me) {
 			table = (JTable) me.getSource();
 			Point p = me.getPoint();
 			int row = table.rowAtPoint(p);
-			if (me.getClickCount() == 2) {
+			if (me.getClickCount() == 2 && row != -1) {
 				playSelectedRow(row);
 			}
 		}
 	};
-
-	public void playSelectedRow(int row) {
-		DefaultTableModel model = (DefaultTableModel) table.getModel();
-		Vector<?> rowData = model.getDataVector();
-		int modelRow = table.convertRowIndexToModel(row);
-
-		@SuppressWarnings("unchecked")
-		Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
-
-		int index = getSelectedSongIndex(rowValue);
-		if (index != -1) {
-			if (isPlaying) {
-				stop();
-			}
-			play(songs.get(index).getPath());
-			setTitle(Strings.TITLE_NAME + ": " + songs.get(index).getTitle());
-		}
-
-	}
 }

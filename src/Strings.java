@@ -7,4 +7,5 @@ public class Strings {
 	public static final String NOT_SELECTED = "You have not selected a song! Select one and then click the Play button.";
 	public static final String MORE_SELECTED = "You have selected more than one song! To play a song, select one and click the Play button again.";
 	public static final String FILE_NOT_FOUND = "The song is not able to play!";
+	public static final String MUSIC_FOLDER_NAME = "Music";
 }
