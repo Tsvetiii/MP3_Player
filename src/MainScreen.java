@@ -4,6 +4,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -20,8 +21,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Vector;
 
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
@@ -44,23 +45,61 @@ import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
 
-	public static final String[] categories = { "Name", "Author", "Album", "Genre" };
-
+	public static final String[] CATEGORIES = { "Name", "Author", "Album", "Genre" };
+	
 	private JTextField textField;
 	private JComboBox<String> categoryChoice;
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private TableRowSorter<TableModel> rowSorter;
-	private RowFilter<TableModel, Integer> rowFilter;
 	private JFileChooser fc;
 	private int lastSelectedColumnIndex;
+	private ArrayList<Song> songs;
 
 	public MainScreen() {
 
 		setTitle("MP3 Player");
 		setBounds(100, 100, 600, 500);
-		setMenu();
 		setUIComponents();
+
+		songs = new ArrayList<>();
+
+	}
+
+	private void setUIComponents() {
+		setMenu();
+
+		JPanel controlsPanel = new JPanel();
+		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
+
+		Button btnPlay = new Button("PLAY");
+		controlsPanel.add(btnPlay);
+		btnPlay.addActionListener(btnPlayAL);
+
+		JSlider slider = new JSlider();
+		slider.setValue(0);
+		controlsPanel.add(slider);
+
+		Button btnStop = new Button("STOP");
+		controlsPanel.add(btnStop);
+		btnStop.addActionListener(btnStopAL);
+
+		JPanel settingsPanel = new JPanel();
+		getContentPane().add(settingsPanel, BorderLayout.NORTH);
+
+		JLabel lblSearch = new JLabel("Search:");
+
+		textField = new JTextField();
+		textField.setColumns(10);
+
+		categoryChoice = new JComboBox<>(CATEGORIES);
+		categoryChoice.addActionListener(categoryChoiceAL);
+
+		settingsPanel.add(lblSearch);
+		settingsPanel.add(textField);
+		settingsPanel.add(categoryChoice);
+
+		setPlaylist();
 
 	}
 
@@ -104,66 +143,19 @@ public class MainScreen extends JFrame {
 		mntmExit.addActionListener(exitAL);
 	}
 
-	private void setUIComponents() {
+	@SuppressWarnings("serial")
+	private void setPlaylist() {
 
-		JPanel controlsPanel = new JPanel();
-		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
+		tableModel = new DefaultTableModel(null, CATEGORIES) {
 
-		Button btnPlay = new Button("PLAY");
-		controlsPanel.add(btnPlay);
-		btnPlay.addActionListener(btnPlayAL);
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
 
-		JSlider slider = new JSlider();
-		slider.setValue(0);
-		controlsPanel.add(slider);
-
-		Button btnStop = new Button("STOP");
-		controlsPanel.add(btnStop);
-		btnStop.addActionListener(btnStopAL);
-
-		JPanel settingsPanel = new JPanel();
-		getContentPane().add(settingsPanel, BorderLayout.NORTH);
-
-		JLabel lblSearch = new JLabel("Search:");
-
-		textField = new JTextField();
-		textField.setColumns(10);
-
-		categoryChoice = new JComboBox<>(categories);
-		categoryChoice.addActionListener(categoryChoiceAL);
-
-		settingsPanel.add(lblSearch);
-		settingsPanel.add(textField);
-		settingsPanel.add(categoryChoice);
-		
-		String[][] data = {};
-
-//		String[][] data = { { "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" },
-//				{ "Kathy", "Smith", "Snowboarding", "Rock" }, { "John", "Doe", "Rowing", "Metal" },
-//				{ "Sue", "Black", "Knitting", "Turbo Folk" }, { "Jane", "White", "Speed reading", "Country" },
-//				{ "Joe", "Brown", "Pool", "Hip-hop" }, { "Kathy", "Smith", "Snowboarding", "Rock" },
-//				{ "John", "Doe", "Rowing", "Metal" }, { "Sue", "Black", "Knitting", "Turbo Folk" },
-//				{ "Jane", "White", "Speed reading", "Country" }, { "Joe", "Brown", "Pool", "Hip-hop" } };
-
-		setPlaylist(data);
-
-	}
-
-	private void setPlaylist(String[][] data) {
-
-		tableModel = new DefaultTableModel(data, categories);
 		table = new JTable(tableModel);
 		rowSorter = new TableRowSorter<>(table.getModel());
-
 		table.setRowSorter(rowSorter);
 		table.setAutoCreateColumnsFromModel(false);
 		table.getTableHeader().setReorderingAllowed(false);
@@ -179,6 +171,57 @@ public class MainScreen extends JFrame {
 
 	}
 
+	private void updatePlaylist() {
+
+		if (this.songs != null) {
+			tableModel.setRowCount(0);
+
+			int size = this.songs.size();
+			String[][] data = new String[size][CATEGORIES.length];
+
+			for (int i = 0; i < size; i++) {
+
+				data[i][0] = this.songs.get(i).getTitle();
+				data[i][1] = this.songs.get(i).getArtist();
+				data[i][2] = this.songs.get(i).getAlbum();
+				data[i][3] = this.songs.get(i).getGenre();
+
+				tableModel.addRow(data[i]);
+			}
+
+			tableModel.fireTableDataChanged();
+			sortTable(0);
+		}
+	}
+
+	public int getSelectedSongIndex(Vector<String> selectedRow) {
+		int index = -1;
+
+		String[] rowValues = { (String) selectedRow.get(0), (String) selectedRow.get(1), (String) selectedRow.get(2),
+				(String) selectedRow.get(3) };
+
+		for (Song s : this.songs) {
+			index++;
+			if (s.getTitle().equals(rowValues[0]) && s.getArtist().equals(rowValues[1])
+					&& s.getAlbum().equals(rowValues[2]) && s.getGenre().equals(rowValues[3])) {
+				return index;
+			}
+		}
+
+		return -1;
+	}
+
+	public RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
+		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
+				categoryChoice.getSelectedIndex());
+
+		if (searchField.trim().length() == 0) {
+			return null;
+		} else {
+			return rowFilter;
+		}
+	}
+
 	ActionListener addFileAL = new ActionListener() {
 
 		@Override
@@ -191,11 +234,10 @@ public class MainScreen extends JFrame {
 			int returnVal = fc.showOpenDialog(MainScreen.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File file = fc.getSelectedFile();
-				
-			}
+				songs.add(new Song(file));
 
-			// sorting songs
-			sortTable(0);
+				updatePlaylist();
+			}
 		}
 	};
 
@@ -206,7 +248,6 @@ public class MainScreen extends JFrame {
 			fc = new JFileChooser(getUserDefaultMusicFolder());
 			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-			// create new filename filter
 			FilenameFilter fileNameFilter = new FilenameFilter() {
 
 				@Override
@@ -225,25 +266,44 @@ public class MainScreen extends JFrame {
 			int returnVal = fc.showOpenDialog(MainScreen.this);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
 				File[] files = fc.getSelectedFile().listFiles(fileNameFilter);
+
+				for (File f : files) {
+					songs.add(new Song(f));
+				}
+
+				updatePlaylist();
 			}
 
-			// sorting songs
-			sortTable(0);
 		}
 	};
 
 	ActionListener removeFileAL = new ActionListener() {
 
+		@SuppressWarnings("rawtypes")
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			int[] lines = table.getSelectedRows();
-			if (lines.length > 0) {
-				for (int i = 0; i < lines.length; i++) {
-					lines[i] = table.convertRowIndexToModel(lines[i]);
+
+			if (table.getSelectedRowCount() > 0) {
+				List<Vector> selectedRows = new ArrayList<>();
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				Vector rowData = model.getDataVector();
+				for (int row : table.getSelectedRows()) {
+					int modelRow = table.convertRowIndexToModel(row);
+
+					@SuppressWarnings("unchecked")
+					Vector<String> rowValue = (Vector) rowData.get(modelRow);
+
+					int index = getSelectedSongIndex(rowValue);
+					if (index != -1) {
+						songs.remove(index);
+					}
+
+					selectedRows.add(rowValue);
 				}
-				Arrays.sort(lines);
-				for (int i = lines.length - 1; i >= 0; i--) {
-					tableModel.removeRow(lines[i]);
+
+				for (Vector rowValue : selectedRows) {
+					int rowIndex = rowData.indexOf(rowValue);
+					model.removeRow(rowIndex);
 				}
 			}
 
@@ -255,8 +315,8 @@ public class MainScreen extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			DefaultTableModel tm = (DefaultTableModel) table.getModel();
-			tm.setRowCount(0);
+			songs.clear();
+			tableModel.setRowCount(0);
 		}
 	};
 
@@ -272,26 +332,12 @@ public class MainScreen extends JFrame {
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			String text = textField.getText();
-			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			String text = textField.getText();
-			rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 
 		@Override
@@ -311,14 +357,7 @@ public class MainScreen extends JFrame {
 
 	ActionListener categoryChoiceAL = new ActionListener() {
 		public void actionPerformed(ActionEvent actionEvent) {
-			String text = textField.getText();
-
-			if (text.trim().length() == 0) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowFilter = RowFilter.regexFilter("(?i)" + text, categoryChoice.getSelectedIndex());
-				rowSorter.setRowFilter(rowFilter);
-			}
+			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
 		}
 	};
 
@@ -388,15 +427,39 @@ public class MainScreen extends JFrame {
 			}
 		}.start();
 	}
-	
+
 	ActionListener btnPlayAL = new ActionListener() {
-		
+
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			play("E:\\Vance Joy - Riptide.mp3");
+
+			int selectedRows = table.getSelectedRowCount();
 			
+			if (selectedRows == 1) {
+				// List<Vector> selectedRows = new ArrayList<>();
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				Vector<?> rowData = model.getDataVector();
+				for (int row : table.getSelectedRows()) {
+					int modelRow = table.convertRowIndexToModel(row);
+
+					@SuppressWarnings("unchecked")
+					Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+
+					int index = getSelectedSongIndex(rowValue);
+					if (index != -1) {
+						play(songs.get(index).getPath());
+						setTitle(songs.get(index).getTitle());
+					}
+
+				}
+			} else if(selectedRows == 0){
+				JOptionPane.showMessageDialog(MainScreen.this, "No selected song! Select a song and then click a Play button.");
+			}else {
+				JOptionPane.showMessageDialog(MainScreen.this, "You are selected more than one song! To play song, select one and click a Play button again.");
+				table.clearSelection();
+			}
+						
 		}
 	};
-	
 
 }
