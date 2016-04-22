@@ -51,7 +51,6 @@ public class MainScreen extends JFrame {
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private TableRowSorter<TableModel> rowSorter;
-	// private RowFilter<TableModel, Integer> rowFilter;
 	private JFileChooser fc;
 	private int lastSelectedColumnIndex;
 	private ArrayList<Song> songs;
@@ -60,10 +59,46 @@ public class MainScreen extends JFrame {
 
 		setTitle("MP3 Player");
 		setBounds(100, 100, 600, 500);
-		setMenu();
 		setUIComponents();
 
 		songs = new ArrayList<>();
+
+	}
+
+	private void setUIComponents() {
+		setMenu();
+
+		JPanel controlsPanel = new JPanel();
+		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
+
+		Button btnPlay = new Button("PLAY");
+		controlsPanel.add(btnPlay);
+		btnPlay.addActionListener(btnPlayAL);
+
+		JSlider slider = new JSlider();
+		slider.setValue(0);
+		controlsPanel.add(slider);
+
+		Button btnStop = new Button("STOP");
+		controlsPanel.add(btnStop);
+		btnStop.addActionListener(btnStopAL);
+
+		JPanel settingsPanel = new JPanel();
+		getContentPane().add(settingsPanel, BorderLayout.NORTH);
+
+		JLabel lblSearch = new JLabel("Search:");
+
+		textField = new JTextField();
+		textField.setColumns(10);
+
+		categoryChoice = new JComboBox<>(CATEGORIES);
+		categoryChoice.addActionListener(categoryChoiceAL);
+
+		settingsPanel.add(lblSearch);
+		settingsPanel.add(textField);
+		settingsPanel.add(categoryChoice);
+
+		setPlaylist();
 
 	}
 
@@ -107,48 +142,19 @@ public class MainScreen extends JFrame {
 		mntmExit.addActionListener(exitAL);
 	}
 
-	private void setUIComponents() {
-
-		JPanel controlsPanel = new JPanel();
-		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
-
-		Button btnPlay = new Button("PLAY");
-		controlsPanel.add(btnPlay);
-		btnPlay.addActionListener(btnPlayAL);
-
-		JSlider slider = new JSlider();
-		slider.setValue(0);
-		controlsPanel.add(slider);
-
-		Button btnStop = new Button("STOP");
-		controlsPanel.add(btnStop);
-		btnStop.addActionListener(btnStopAL);
-
-		JPanel settingsPanel = new JPanel();
-		getContentPane().add(settingsPanel, BorderLayout.NORTH);
-
-		JLabel lblSearch = new JLabel("Search:");
-
-		textField = new JTextField();
-		textField.setColumns(10);
-
-		categoryChoice = new JComboBox<>(CATEGORIES);
-		categoryChoice.addActionListener(categoryChoiceAL);
-
-		settingsPanel.add(lblSearch);
-		settingsPanel.add(textField);
-		settingsPanel.add(categoryChoice);
-
-		setPlaylist();
-
-	}
-
+	@SuppressWarnings("serial")
 	private void setPlaylist() {
 
-		tableModel = new DefaultTableModel(null, CATEGORIES);
+		tableModel = new DefaultTableModel(null, CATEGORIES) {
+
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
+
 		table = new JTable(tableModel);
 		rowSorter = new TableRowSorter<>(table.getModel());
-
 		table.setRowSorter(rowSorter);
 		table.setAutoCreateColumnsFromModel(false);
 		table.getTableHeader().setReorderingAllowed(false);
@@ -199,6 +205,17 @@ public class MainScreen extends JFrame {
 		}
 
 		return -1;
+	}
+
+	public RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
+		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
+				categoryChoice.getSelectedIndex());
+
+		if (searchField.trim().length() == 0) {
+			return null;
+		} else {
+			return rowFilter;
+		}
 	}
 
 	ActionListener addFileAL = new ActionListener() {
@@ -308,17 +325,6 @@ public class MainScreen extends JFrame {
 			dispose();
 		}
 	};
-
-	public RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
-		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
-				categoryChoice.getSelectedIndex());
-
-		if (searchField.trim().length() == 0) {
-			return null;
-		} else {
-			return rowFilter;
-		}
-	}
 
 	DocumentListener tableSearchAL = new DocumentListener() {
 
