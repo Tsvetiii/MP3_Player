@@ -453,9 +453,9 @@ public class MainScreen extends JFrame {
 				}
 				
 			} else if(selectedRows == 0){
-				JOptionPane.showMessageDialog(MainScreen.this, "You have not selected a song! Select one and then click the Play button.");
+				JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
 			}else {
-				JOptionPane.showMessageDialog(MainScreen.this, "You have selected more than one song! To play a song, select one and click the Play button again.");
+				JOptionPane.showMessageDialog(MainScreen.this, Strings.MORE_SELECTED);
 				table.clearSelection();
 			}
 						

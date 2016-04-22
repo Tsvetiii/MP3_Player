@@ -65,7 +65,7 @@ public class Song {
 
 	public void setTitle(String title) {
 		if (title == null || title.equals("")) {
-			this.title = "No information";
+			this.title = Strings.NO_INFO;
 		} else {
 			this.title = title;
 		}
@@ -77,7 +77,7 @@ public class Song {
 
 	public void setArtist(String artist) {
 		if (artist == null || artist.equals("")) {
-			this.artist = "No information";
+			this.artist = Strings.NO_INFO;
 		} else {
 			this.artist = artist;
 		}
@@ -89,7 +89,7 @@ public class Song {
 
 	public void setAlbum(String album) {
 		if (album == null || album.equals("")) {
-			this.album = "No information";
+			this.album = Strings.NO_INFO;
 		} else {
 			this.album = album;
 		}
@@ -101,7 +101,7 @@ public class Song {
 
 	public void setGenre(String genre) {
 		if (genre == null || genre.equals("")) {
-			this.genre = "No information";
+			this.genre = Strings.NO_INFO;
 		} else {
 			this.genre = genre;
 		}
