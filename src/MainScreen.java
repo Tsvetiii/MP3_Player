@@ -18,7 +18,6 @@ import java.awt.event.MouseListener;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,10 +37,12 @@ import javax.swing.table.TableModel;
 import javax.swing.table.TableRowSorter;
 
 import javazoom.jl.decoder.JavaLayerException;
-import javazoom.jl.player.Player;
+import javazoom.jl.player.advanced.AdvancedPlayer;
 
 import javax.swing.JLabel;
 import java.awt.Button;
+import java.awt.Point;
+
 import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
@@ -55,6 +56,8 @@ public class MainScreen extends JFrame {
 	private int lastSelectedColumnIndex;
 	private ArrayList<Song> songs;
 	private boolean isPlaying;
+	private int pausedOnFrame = 0;
+	private String currentPlayingSongPath = null;
 
 	public MainScreen() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -168,6 +171,7 @@ public class MainScreen extends JFrame {
 
 		textField.getDocument().addDocumentListener(tableSearchAL);
 		table.getTableHeader().addMouseListener(tableHeaderClickAL);
+		table.addMouseListener(doubleClickTableRow);
 
 	}
 
@@ -295,6 +299,11 @@ public class MainScreen extends JFrame {
 
 					int index = getSelectedSongIndex(rowValue);
 					if (index != -1) {
+
+						if (isPlaying && currentPlayingSongPath.equals(songs.get(index).getPath())) {
+							stop();
+						}
+
 						songs.remove(index);
 					}
 
@@ -305,6 +314,7 @@ public class MainScreen extends JFrame {
 					int rowIndex = rowData.indexOf(rowValue);
 					model.removeRow(rowIndex);
 				}
+
 			}
 
 			table.clearSelection();
@@ -392,7 +402,7 @@ public class MainScreen extends JFrame {
 	FileInputStream FIS;
 	BufferedInputStream BIS;
 
-	public Player player;
+	public AdvancedPlayer player;
 	public long pauseLocation;
 	public long songTotalLenght;
 	public String fileLocation;
@@ -465,28 +475,32 @@ public class MainScreen extends JFrame {
 			FIS = new FileInputStream(path);
 			BIS = new BufferedInputStream(FIS);
 
-			player = new Player(BIS);
+			player = new AdvancedPlayer(BIS);
 
-			songTotalLenght = FIS.available();
-
-			fileLocation = path + "";
+			// songTotalLenght = FIS.available();
 
 		} catch (IOException | JavaLayerException e) {
+			currentPlayingSongPath = null;
+			pausedOnFrame = 0;
 			JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
-		} 
-		
+		}
+
 		new Thread() {
 			@Override
 			public void run() {
 				try {
 					isPlaying = true;
-					player.play();
+					currentPlayingSongPath = path;
+					player.play(pausedOnFrame, Integer.MAX_VALUE);
 
 				} catch (JavaLayerException e) {
+					currentPlayingSongPath = null;
+					pausedOnFrame = 0;
 					JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
 				}
 			}
 		}.start();
+
 	}
 
 	ActionListener btnPlayAL = new ActionListener() {
@@ -497,24 +511,8 @@ public class MainScreen extends JFrame {
 			int selectedRows = table.getSelectedRowCount();
 
 			if (selectedRows == 1) {
-				DefaultTableModel model = (DefaultTableModel) table.getModel();
-				Vector<?> rowData = model.getDataVector();
-				for (int row : table.getSelectedRows()) {
-					int modelRow = table.convertRowIndexToModel(row);
-
-					@SuppressWarnings("unchecked")
-					Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
-
-					int index = getSelectedSongIndex(rowValue);
-					if (index != -1) {
-						if (isPlaying) {
-							stop();
-						}
-						play(songs.get(index).getPath());
-						setTitle(Strings.TITLE_NAME + " " + songs.get(index).getTitle());
-					}
-				}
-
+				int row = table.getSelectedRow();
+				playSelectedRow(row);
 			} else if (selectedRows == 0) {
 				JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
 			} else {
@@ -524,4 +522,33 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	MouseListener doubleClickTableRow = new MouseAdapter() {
+		public void mousePressed(MouseEvent me) {
+			table = (JTable) me.getSource();
+			Point p = me.getPoint();
+			int row = table.rowAtPoint(p);
+			if (me.getClickCount() == 2) {
+				playSelectedRow(row);
+			}
+		}
+	};
+
+	public void playSelectedRow(int row) {
+		DefaultTableModel model = (DefaultTableModel) table.getModel();
+		Vector<?> rowData = model.getDataVector();
+		int modelRow = table.convertRowIndexToModel(row);
+
+		@SuppressWarnings("unchecked")
+		Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+
+		int index = getSelectedSongIndex(rowValue);
+		if (index != -1) {
+			if (isPlaying) {
+				stop();
+			}
+			play(songs.get(index).getPath());
+			setTitle(Strings.TITLE_NAME + ": " + songs.get(index).getTitle());
+		}
+
+	}
 }
