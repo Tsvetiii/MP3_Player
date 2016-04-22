@@ -20,6 +20,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Vector;
@@ -45,7 +46,6 @@ import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
 
-	
 	private JTextField textField;
 	private JComboBox<String> categoryChoice;
 	private DefaultTableModel tableModel;
@@ -386,14 +386,22 @@ public class MainScreen extends JFrame {
 	BufferedInputStream BIS;
 
 	public Player player;
+	public long pauseLocation;
+	public long songTotalLenght;
+	public String fileLocation;
 
 	// method to stop playing a song
 	public void stop() {
 		if (player != null) {
 			player.close();
+
+			pauseLocation = 0;
+			songTotalLenght = 0;
+
 			setTitle(Strings.TITLE_NAME);
 		}
 	}
+
 
 	ActionListener btnStopAL = new ActionListener() {
 
@@ -403,17 +411,65 @@ public class MainScreen extends JFrame {
 
 		}
 	};
+	
+//	public void pause() {
+//		if (player != null) {
+//			try {
+//				pauseLocation = FIS.available();
+//				player.close();
+//				setTitle(Strings.TITLE_NAME);
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//
+//		}
+//	}
+//
+//	public void resume() {
+//		try {
+//			FIS = new FileInputStream(fileLocation);
+//			BIS = new BufferedInputStream(FIS);
+//
+//			player = new Player(BIS);
+//
+//			FIS.skip(songTotalLenght - pauseLocation);
+//
+//		} catch (FileNotFoundException | JavaLayerException e) {
+//
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
+//
+//		new Thread() {
+//			@Override
+//			public void run() {
+//				try {
+//					player.play();
+//				} catch (JavaLayerException e) {
+//
+//				}
+//			}
+//		}.start();
+//	}
 
 	// method to play a song
 	public void play(String path) {
+
 		try {
 			FIS = new FileInputStream(path);
 			BIS = new BufferedInputStream(FIS);
 
 			player = new Player(BIS);
 
+			songTotalLenght = FIS.available();
+
+			fileLocation = path + "";
+
 		} catch (FileNotFoundException | JavaLayerException e) {
 
+		} catch (IOException e) {
+
+			e.printStackTrace();
 		}
 
 		new Thread() {
@@ -433,32 +489,35 @@ public class MainScreen extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 
-			int selectedRows = table.getSelectedRowCount();
-			
-			if (selectedRows == 1) {
-				// List<Vector> selectedRows = new ArrayList<>();
-				DefaultTableModel model = (DefaultTableModel) table.getModel();
-				Vector<?> rowData = model.getDataVector();
-				for (int row : table.getSelectedRows()) {
-					int modelRow = table.convertRowIndexToModel(row);
+			if (player == null) {
 
-					@SuppressWarnings("unchecked")
-					Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+				int selectedRows = table.getSelectedRowCount();
 
-					int index = getSelectedSongIndex(rowValue);
-					if (index != -1) {
-						play(songs.get(index).getPath());
-						setTitle(Strings.TITLE_NAME + songs.get(index).getTitle());
+				if (selectedRows == 1) {
+					// List<Vector> selectedRows = new ArrayList<>();
+					DefaultTableModel model = (DefaultTableModel) table.getModel();
+					Vector<?> rowData = model.getDataVector();
+					for (int row : table.getSelectedRows()) {
+						int modelRow = table.convertRowIndexToModel(row);
+
+						@SuppressWarnings("unchecked")
+						Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+
+						int index = getSelectedSongIndex(rowValue);
+						if (index != -1) {
+							play(songs.get(index).getPath());
+							setTitle(Strings.TITLE_NAME + songs.get(index).getTitle());
+						}
 					}
+
+				} else if (selectedRows == 0) {
+					JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
+				} else {
+					JOptionPane.showMessageDialog(MainScreen.this, Strings.MORE_SELECTED);
+					table.clearSelection();
 				}
-				
-			} else if(selectedRows == 0){
-				JOptionPane.showMessageDialog(MainScreen.this, Strings.NOT_SELECTED);
-			}else {
-				JOptionPane.showMessageDialog(MainScreen.this, Strings.MORE_SELECTED);
-				table.clearSelection();
+
 			}
-						
 		}
 	};
 
