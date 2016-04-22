@@ -391,6 +391,7 @@ public class MainScreen extends JFrame {
 	public void stop() {
 		if (player != null) {
 			player.close();
+			setTitle(Strings.TITLE_NAME);
 		}
 	}
 
@@ -447,10 +448,10 @@ public class MainScreen extends JFrame {
 					int index = getSelectedSongIndex(rowValue);
 					if (index != -1) {
 						play(songs.get(index).getPath());
-						setTitle(songs.get(index).getTitle());
+						setTitle(Strings.TITLE_NAME + songs.get(index).getTitle());
 					}
-
 				}
+				
 			} else if(selectedRows == 0){
 				JOptionPane.showMessageDialog(MainScreen.this, "No selected song! Select a song and then click a Play button.");
 			}else {
