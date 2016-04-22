@@ -4,6 +4,7 @@ import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
@@ -45,7 +46,7 @@ import javax.swing.JSlider;
 public class MainScreen extends JFrame {
 
 	public static final String[] CATEGORIES = { "Name", "Author", "Album", "Genre" };
-
+	
 	private JTextField textField;
 	private JComboBox<String> categoryChoice;
 	private DefaultTableModel tableModel;
@@ -193,13 +194,16 @@ public class MainScreen extends JFrame {
 		}
 	}
 
-	public int getSongIndexInPlaylist(String[] selectedRow) {
+	public int getSelectedSongIndex(Vector<String> selectedRow) {
 		int index = -1;
+
+		String[] rowValues = { (String) selectedRow.get(0), (String) selectedRow.get(1), (String) selectedRow.get(2),
+				(String) selectedRow.get(3) };
 
 		for (Song s : this.songs) {
 			index++;
-			if (s.getTitle().equals(selectedRow[0]) && s.getArtist().equals(selectedRow[1])
-					&& s.getAlbum().equals(selectedRow[2]) && s.getGenre().equals(selectedRow[3])) {
+			if (s.getTitle().equals(rowValues[0]) && s.getArtist().equals(rowValues[1])
+					&& s.getAlbum().equals(rowValues[2]) && s.getGenre().equals(rowValues[3])) {
 				return index;
 			}
 		}
@@ -285,13 +289,11 @@ public class MainScreen extends JFrame {
 				Vector rowData = model.getDataVector();
 				for (int row : table.getSelectedRows()) {
 					int modelRow = table.convertRowIndexToModel(row);
-					Vector rowValue = (Vector) rowData.get(modelRow);
 
-					String[] rowValues = { (String) rowValue.get(0), (String) rowValue.get(1), (String) rowValue.get(2),
-							(String) rowValue.get(3) };
+					@SuppressWarnings("unchecked")
+					Vector<String> rowValue = (Vector) rowData.get(modelRow);
 
-					int index = getSongIndexInPlaylist(rowValues);
-
+					int index = getSelectedSongIndex(rowValue);
 					if (index != -1) {
 						songs.remove(index);
 					}
@@ -430,7 +432,33 @@ public class MainScreen extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			// play("E:\\Vance Joy - Riptide.mp3");
+
+			int selectedRows = table.getSelectedRowCount();
+			
+			if (selectedRows == 1) {
+				// List<Vector> selectedRows = new ArrayList<>();
+				DefaultTableModel model = (DefaultTableModel) table.getModel();
+				Vector<?> rowData = model.getDataVector();
+				for (int row : table.getSelectedRows()) {
+					int modelRow = table.convertRowIndexToModel(row);
+
+					@SuppressWarnings("unchecked")
+					Vector<String> rowValue = (Vector<String>) rowData.get(modelRow);
+
+					int index = getSelectedSongIndex(rowValue);
+					if (index != -1) {
+						play(songs.get(index).getPath());
+						setTitle(songs.get(index).getTitle());
+					}
+
+				}
+			} else if(selectedRows == 0){
+				JOptionPane.showMessageDialog(MainScreen.this, "No selected song! Select a song and then click a Play button.");
+			}else {
+				JOptionPane.showMessageDialog(MainScreen.this, "You are selected more than one song! To play song, select one and click a Play button again.");
+				table.clearSelection();
+			}
+						
 		}
 	};
 
