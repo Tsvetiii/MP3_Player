@@ -45,7 +45,6 @@ import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
 
-	public static final String[] CATEGORIES = { "Name", "Author", "Album", "Genre" };
 	
 	private JTextField textField;
 	private JComboBox<String> categoryChoice;
@@ -58,7 +57,7 @@ public class MainScreen extends JFrame {
 
 	public MainScreen() {
 
-		setTitle("MP3 Player");
+		setTitle(Strings.TITLE_NAME);
 		setBounds(100, 100, 600, 500);
 		setUIComponents();
 
@@ -92,7 +91,7 @@ public class MainScreen extends JFrame {
 		textField = new JTextField();
 		textField.setColumns(10);
 
-		categoryChoice = new JComboBox<>(CATEGORIES);
+		categoryChoice = new JComboBox<>(Strings.CATEGORIES);
 		categoryChoice.addActionListener(categoryChoiceAL);
 
 		settingsPanel.add(lblSearch);
@@ -146,7 +145,7 @@ public class MainScreen extends JFrame {
 	@SuppressWarnings("serial")
 	private void setPlaylist() {
 
-		tableModel = new DefaultTableModel(null, CATEGORIES) {
+		tableModel = new DefaultTableModel(null, Strings.CATEGORIES) {
 
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -177,7 +176,7 @@ public class MainScreen extends JFrame {
 			tableModel.setRowCount(0);
 
 			int size = this.songs.size();
-			String[][] data = new String[size][CATEGORIES.length];
+			String[][] data = new String[size][Strings.CATEGORIES.length];
 
 			for (int i = 0; i < size; i++) {
 
