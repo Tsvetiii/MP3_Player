@@ -25,7 +25,8 @@ public class Song {
 	/**
 	 * Constructor
 	 * 
-	 * @param file - mp3 file source
+	 * @param file
+	 *            - mp3 file source
 	 */
 	public Song(File file) {
 
@@ -60,6 +61,7 @@ public class Song {
 
 	/**
 	 * Getter for song absolute path
+	 * 
 	 * @return Returns string with absolute path
 	 */
 	public String getPath() {
@@ -75,6 +77,7 @@ public class Song {
 
 	/**
 	 * Getter for song title
+	 * 
 	 * @return Returns song title
 	 */
 	public String getTitle() {
@@ -94,6 +97,7 @@ public class Song {
 
 	/**
 	 * Getter for song artist
+	 * 
 	 * @return Returns song artist
 	 */
 	public String getArtist() {
@@ -113,6 +117,7 @@ public class Song {
 
 	/**
 	 * Getter for album
+	 * 
 	 * @return Returns song album
 	 */
 	public String getAlbum() {
@@ -132,6 +137,7 @@ public class Song {
 
 	/**
 	 * Getter for genre
+	 * 
 	 * @return Returns song genre
 	 */
 	public String getGenre() {
