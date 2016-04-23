@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.swing.JOptionPane;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -20,6 +22,11 @@ public class Song {
 	private String genre;
 	private String path;
 
+	/**
+	 * Constructor
+	 * 
+	 * @param file - mp3 file source
+	 */
 	public Song(File file) {
 
 		setPath(file.getPath());
@@ -40,7 +47,7 @@ public class Song {
 			setGenre(metadata.get("xmpDM:genre"));
 
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, Strings.FILE_NOT_FOUND);
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (SAXException e) {
@@ -51,18 +58,32 @@ public class Song {
 
 	}
 
+	/**
+	 * Getter for song absolute path
+	 * @return Returns string with absolute path
+	 */
 	public String getPath() {
 		return path;
 	}
 
+	/**
+	 * Setter for song absolute path
+	 */
 	public void setPath(String path) {
 		this.path = path;
 	}
 
+	/**
+	 * Getter for song title
+	 * @return Returns song title
+	 */
 	public String getTitle() {
 		return title;
 	}
 
+	/**
+	 * Setter for song title
+	 */
 	public void setTitle(String title) {
 		if (title == null || title.equals("")) {
 			this.title = Strings.NO_INFO;
@@ -71,10 +92,17 @@ public class Song {
 		}
 	}
 
+	/**
+	 * Getter for song artist
+	 * @return Returns song artist
+	 */
 	public String getArtist() {
 		return artist;
 	}
 
+	/**
+	 * Setter for song artist
+	 */
 	public void setArtist(String artist) {
 		if (artist == null || artist.equals("")) {
 			this.artist = Strings.NO_INFO;
@@ -83,10 +111,17 @@ public class Song {
 		}
 	}
 
+	/**
+	 * Getter for album
+	 * @return Returns song album
+	 */
 	public String getAlbum() {
 		return album;
 	}
 
+	/**
+	 * Setter for album
+	 */
 	public void setAlbum(String album) {
 		if (album == null || album.equals("")) {
 			this.album = Strings.NO_INFO;
@@ -95,10 +130,17 @@ public class Song {
 		}
 	}
 
+	/**
+	 * Getter for genre
+	 * @return Returns song genre
+	 */
 	public String getGenre() {
 		return genre;
 	}
 
+	/**
+	 * Setter for genre
+	 */
 	public void setGenre(String genre) {
 		if (genre == null || genre.equals("")) {
 			this.genre = Strings.NO_INFO;

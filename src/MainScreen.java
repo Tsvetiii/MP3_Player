@@ -41,37 +41,47 @@ import javazoom.jl.player.advanced.AdvancedPlayer;
 
 import javax.swing.JLabel;
 import java.awt.Button;
+import java.awt.Dimension;
 import java.awt.Point;
-
-import javax.swing.JSlider;
 
 public class MainScreen extends JFrame {
 
-	private JTextField textField;
+	private JTextField searchField;
 	private JComboBox<String> categoryChoice;
 	private DefaultTableModel tableModel;
 	private JTable table;
 	private TableRowSorter<TableModel> rowSorter;
-	private JFileChooser fc;
 	private int lastSelectedColumnIndex;
 	private ArrayList<Song> songs;
 	private boolean isPlaying;
-	private int pausedOnFrame = 0;
 	private String currentPlayingSongPath = null;
-	FileInputStream FIS;
-	BufferedInputStream BIS;
+	private FileInputStream FIS;
+	private BufferedInputStream BIS;
 	private AdvancedPlayer player;
 
+	/**
+	 * Constructor
+	 */
 	public MainScreen() {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		setTitle(Strings.TITLE_NAME);
-		setBounds(100, 100, 600, 500);
+		setDefaultFrameTitle();
+		setBounds(100, 100, 800, 600);
 		setUIComponents();
 
 		songs = new ArrayList<>();
 		isPlaying = false;
 	}
 
+	/**
+	 * Set title string
+	 */
+	private void setDefaultFrameTitle() {
+		setTitle(Strings.TITLE_NAME);
+	}
+
+	/**
+	 * Load UI components
+	 */
 	private void setUIComponents() {
 		setMenu();
 
@@ -79,14 +89,12 @@ public class MainScreen extends JFrame {
 		getContentPane().add(controlsPanel, BorderLayout.SOUTH);
 
 		Button btnPlay = new Button("PLAY");
+		btnPlay.setPreferredSize(new Dimension(50, 30));
 		controlsPanel.add(btnPlay);
 		btnPlay.addActionListener(btnPlayAL);
 
-		JSlider slider = new JSlider();
-		slider.setValue(0);
-		controlsPanel.add(slider);
-
 		Button btnStop = new Button("STOP");
+		btnStop.setPreferredSize(new Dimension(50, 30));
 		controlsPanel.add(btnStop);
 		btnStop.addActionListener(btnStopAL);
 
@@ -95,20 +103,23 @@ public class MainScreen extends JFrame {
 
 		JLabel lblSearch = new JLabel("Search:");
 
-		textField = new JTextField();
-		textField.setColumns(10);
+		searchField = new JTextField();
+		searchField.setColumns(10);
 
 		categoryChoice = new JComboBox<>(Strings.CATEGORIES);
 		categoryChoice.addActionListener(categoryChoiceAL);
 
 		settingsPanel.add(lblSearch);
-		settingsPanel.add(textField);
+		settingsPanel.add(searchField);
 		settingsPanel.add(categoryChoice);
 
 		setPlaylist();
 
 	}
 
+	/**
+	 * Set a menu components
+	 */
 	private void setMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -144,8 +155,12 @@ public class MainScreen extends JFrame {
 		mntmRemoveFile.addActionListener(removeFileAL);
 		mntmRemoveAllFiles.addActionListener(removeAllFilesAL);
 		mntmExit.addActionListener(exitAL);
+		mntmAbout.addActionListener(helpAboutAL);
 	}
 
+	/**
+	 * Set a JTable for playlist
+	 */
 	@SuppressWarnings("serial")
 	private void setPlaylist() {
 
@@ -169,12 +184,15 @@ public class MainScreen extends JFrame {
 		lastSelectedColumnIndex = -1;
 		sortTable(0);
 
-		textField.getDocument().addDocumentListener(tableSearchAL);
+		searchField.getDocument().addDocumentListener(tableSearchAL);
 		table.getTableHeader().addMouseListener(tableHeaderClickAL);
 		table.addMouseListener(doubleClickTableRow);
 
 	}
 
+	/**
+	 * Update playlist with song's metadata
+	 */
 	private void updatePlaylist() {
 
 		if (this.songs != null) {
@@ -198,6 +216,12 @@ public class MainScreen extends JFrame {
 		}
 	}
 
+	/**
+	 * 
+	 * @param selectedRow
+	 * @return Returns number of selected row index in list of songs. Returns
+	 *         value -1 when no match with selection in songs list.
+	 */
 	private int getSelectedSongIndex(Vector<String> selectedRow) {
 		int index = -1;
 
@@ -215,6 +239,12 @@ public class MainScreen extends JFrame {
 		return -1;
 	}
 
+	/**
+	 * 
+	 * @param searchField
+	 * @return Returns RowFilter specified by user text input and category
+	 *         choice. For empty string for search, method returns null.
+	 */
 	private RowFilter<TableModel, Integer> getSearchFilter(String searchField) {
 		RowFilter<TableModel, Integer> rowFilter = RowFilter.regexFilter("(?i)" + searchField,
 				categoryChoice.getSelectedIndex());
@@ -226,6 +256,11 @@ public class MainScreen extends JFrame {
 		}
 	}
 
+	/**
+	 * Sorting JTable data
+	 * 
+	 * @param colIndex
+	 */
 	private void sortTable(int colIndex) {
 
 		List<RowSorter.SortKey> sortKeys = new ArrayList<>();
@@ -244,10 +279,21 @@ public class MainScreen extends JFrame {
 
 	}
 
+	/**
+	 * Get path to music folder on user
+	 * 
+	 * @return Returns path string.
+	 */
 	private String getUserDefaultMusicFolder() {
 		return System.getProperty("user.home") + System.getProperty("file.separator") + Strings.MUSIC_FOLDER_NAME;
 	}
 
+	/**
+	 * Play a song.
+	 * 
+	 * @param path
+	 *            - song absolute path on drive
+	 */
 	private void play(String path) {
 
 		try {
@@ -258,7 +304,6 @@ public class MainScreen extends JFrame {
 
 		} catch (IOException | JavaLayerException e) {
 			currentPlayingSongPath = null;
-			pausedOnFrame = 0;
 			JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
 		}
 
@@ -268,11 +313,10 @@ public class MainScreen extends JFrame {
 				try {
 					isPlaying = true;
 					currentPlayingSongPath = path;
-					player.play(pausedOnFrame, Integer.MAX_VALUE);
+					player.play();
 
 				} catch (JavaLayerException e) {
 					currentPlayingSongPath = null;
-					pausedOnFrame = 0;
 					JOptionPane.showMessageDialog(MainScreen.this, Strings.FILE_NOT_FOUND);
 				}
 			}
@@ -280,16 +324,23 @@ public class MainScreen extends JFrame {
 
 	}
 
-	// method to stop playing a song
+	/**
+	 * Stop playing a song
+	 */
 	private void stop() {
 		if (player != null) {
 			player.close();
 			isPlaying = false;
-
-			setTitle(Strings.TITLE_NAME);
+			setDefaultFrameTitle();
 		}
 	}
 
+	/**
+	 * Get a selected row in JTable and launch song playing
+	 * 
+	 * @param row
+	 *            - selected row in JTable
+	 */
 	private void playSelectedRow(int row) {
 		DefaultTableModel model = (DefaultTableModel) table.getModel();
 		Vector<?> rowData = model.getDataVector();
@@ -309,11 +360,15 @@ public class MainScreen extends JFrame {
 
 	}
 
+	/**
+	 * ActionListener for file->addFile menu. Add selected file like song in
+	 * JTable and song's list
+	 */
 	ActionListener addFileAL = new ActionListener() {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			fc = new JFileChooser(getUserDefaultMusicFolder());
+			JFileChooser fc = new JFileChooser(getUserDefaultMusicFolder());
 			fc.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			fc.setAcceptAllFileFilterUsed(false);
 			FileFilter filter = new FileNameExtensionFilter("MP3 File", "mp3");
@@ -328,11 +383,15 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for file->addFolder menu. Add songs from selected folder
+	 * in JTable and song's list
+	 */
 	ActionListener addFolderAL = new ActionListener() {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			fc = new JFileChooser(getUserDefaultMusicFolder());
+			JFileChooser fc = new JFileChooser(getUserDefaultMusicFolder());
 			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
 			FilenameFilter fileNameFilter = new FilenameFilter() {
@@ -364,6 +423,10 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for file->removeFile menu. Remove selected songs from
+	 * JTable and song's list
+	 */
 	ActionListener removeFileAL = new ActionListener() {
 
 		@SuppressWarnings("rawtypes")
@@ -404,6 +467,10 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for file->removeAllFiles menu. Remove all songs in JTable
+	 * and song's list
+	 */
 	ActionListener removeAllFilesAL = new ActionListener() {
 
 		@Override
@@ -416,6 +483,9 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for file->exit menu. Stop playing song and close a frame.
+	 */
 	ActionListener exitAL = new ActionListener() {
 
 		@Override
@@ -427,6 +497,22 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for help->about menu. Display a information dialog about
+	 * program
+	 */
+	ActionListener helpAboutAL = new ActionListener() {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			JOptionPane.showMessageDialog(MainScreen.this, Strings.HELP_ABOUT_MESSAGE, "About",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+	};
+
+	/**
+	 * ActionListener for play button
+	 */
 	ActionListener btnPlayAL = new ActionListener() {
 
 		@Override
@@ -446,31 +532,39 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * ActionListener for stop button
+	 */
 	ActionListener btnStopAL = new ActionListener() {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			stop();
-
 		}
 	};
 
+	/**
+	 * ActionListener for drop-down menu with song's categories of metadata
+	 */
 	ActionListener categoryChoiceAL = new ActionListener() {
 		public void actionPerformed(ActionEvent actionEvent) {
-			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
+			rowSorter.setRowFilter(getSearchFilter(searchField.getText()));
 		}
 	};
 
+	/**
+	 * DocumentListener for change JTable content by sort filter
+	 */
 	DocumentListener tableSearchAL = new DocumentListener() {
 
 		@Override
 		public void insertUpdate(DocumentEvent e) {
-			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
+			rowSorter.setRowFilter(getSearchFilter(searchField.getText()));
 		}
 
 		@Override
 		public void removeUpdate(DocumentEvent e) {
-			rowSorter.setRowFilter(getSearchFilter(textField.getText()));
+			rowSorter.setRowFilter(getSearchFilter(searchField.getText()));
 		}
 
 		@Override
@@ -479,6 +573,9 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * MouseListener for click on JTable header for sorting songs
+	 */
 	MouseListener tableHeaderClickAL = new MouseAdapter() {
 
 		@Override
@@ -488,6 +585,9 @@ public class MainScreen extends JFrame {
 		}
 	};
 
+	/**
+	 * MouseListener for double click on JTable row for play song
+	 */
 	MouseListener doubleClickTableRow = new MouseAdapter() {
 		public void mousePressed(MouseEvent me) {
 			table = (JTable) me.getSource();
